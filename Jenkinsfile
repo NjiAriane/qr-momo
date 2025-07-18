@@ -20,7 +20,7 @@ pipeline {
                             -Dsonar.projectKey=qr-momo \
                             -Dsonar.sources=. \
                             -Dsonar.host.url=http://localhost:9000 \
-                            -Dsonar.token=${my_sonar_token}
+                            -Dsonar.token=${qr-momo_token}
                         """
                     }
                 }
