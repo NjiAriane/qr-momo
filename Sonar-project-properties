@@ -1,6 +1,5 @@
 qr-momo -Dsonar.host.url=http://localhost:9000
 sonar.projectKey=qr-momo
--Dsonar.login=sqp_ebc35a6a143619919fdd8137690cd3411bf1a09e
+-Dsonar.login=sqp_be56b47aaa516840a28e592bbb2c9714108a947c
 
--Dsonar.host.url=http://localhost:9000
--Dsonar.login=sqg_ebc35a6a143619919fdd8137690cd3411bf1a09e
+
