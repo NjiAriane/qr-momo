@@ -4,7 +4,7 @@ pipeline {
     environment {
         CI = false
         SONARSCANNER = "sonarscanner" //
-        qr-momo_token = credentials('sonar-token-id') // 
+        qr-momo-token = credentials('sonar-token-id') // 
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials') // 
     }
 
@@ -19,7 +19,7 @@ pipeline {
                                 -Dsonar.projectKey=qr-momo \
                                 -Dsonar.sources=. \
                                 -Dsonar.host.url=http://localhost:9000 \
-                                -Dsonar.login=${qr-momo_token}
+                                -Dsonar.login=${qr-momo-token}
                             """
                         } catch (Exception e) {
                             error("SonarQube analysis failed: ${e.message}")
@@ -31,8 +31,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                echo 'Installing Dependencies and Building'
-                sh 'docker build -t qr-momo-1:${BUILD_NUMBER} .'
+                echo 'Installing Dependencies and Building'-
             }  
         }
 
