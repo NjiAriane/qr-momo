@@ -3,9 +3,10 @@ pipeline {
 
     environment {
         CI = false
-        SONARSCANNER = "sonarscanner" //
-        qr-momo-token = credentials('sonar-token-id') // 
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials') // 
+        SONARSCANNER = "sonarscanner"
+        qr_momo_token = "my-qr-credentials" 
+        DOCKERHUB_CREDENTIALS = "dockerhub-credentials" 
+        SECRET_TEXT = "my-credentials" 
     }
 
     stages {
@@ -19,7 +20,7 @@ pipeline {
                                 -Dsonar.projectKey=qr-momo \
                                 -Dsonar.sources=. \
                                 -Dsonar.host.url=http://localhost:9000 \
-                                -Dsonar.login=${qr-momo-token}
+                                -Dsonar.login=${qr_momo_token} // Use QR code token
                             """
                         } catch (Exception e) {
                             error("SonarQube analysis failed: ${e.message}")
@@ -31,7 +32,8 @@ pipeline {
 
         stage('Build') {
             steps {
-                echo 'Installing Dependencies and Building'-
+                echo 'Installing Dependencies and Building'
+                sh 'docker build -t qr-momo-1:${BUILD_NUMBER} .'
             }  
         }
 
@@ -43,6 +45,13 @@ pipeline {
                     docker login -u ${DOCKERHUB_CREDENTIALS.username} -p ${DOCKERHUB_CREDENTIALS.password} docker.io
                 """
                 sh 'docker push jaymath237/qr-momo-1'
+            }
+        }
+
+        // Optionally, you can use the SECRET_TEXT in another stage if needed
+        stage('Use Secret Text') {
+            steps {
+                echo "Using secret text: ${SECRET_TEXT}" // Example usage, consider security implications
             }
         }
     }
