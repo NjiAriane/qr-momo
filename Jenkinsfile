@@ -1,13 +1,11 @@
 pipeline {
     agent any
 
-    triggers {
-        pollSCM 'H/5 * * * *' // Polling SCM every 5 minutes
-    }
-
     environment {
         CI = false
         SONARSCANNER = "sonarscanner" //
+        qr-momo_token = credentials('sonar-token-id') // 
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials') // 
     }
 
     stages {
@@ -21,7 +19,7 @@ pipeline {
                                 -Dsonar.projectKey=qr-momo \
                                 -Dsonar.sources=. \
                                 -Dsonar.host.url=http://localhost:9000 \
-                                -Dsonar.token=${qr-momo_token}
+                                -Dsonar.login=${qr-momo_token}
                             """
                         } catch (Exception e) {
                             error("SonarQube analysis failed: ${e.message}")
@@ -42,7 +40,9 @@ pipeline {
             steps {
                 echo 'Deploying to Dockerhub'
                 sh 'docker tag qr-momo-1:${BUILD_NUMBER} jaymath237/qr-momo-1'
-                sh 'docker login -u ${USERNAME} -p ${PASSWORD} docker.io'
+                sh """
+                    docker login -u ${DOCKERHUB_CREDENTIALS.username} -p ${DOCKERHUB_CREDENTIALS.password} docker.io
+                """
                 sh 'docker push jaymath237/qr-momo-1'
             }
         }
