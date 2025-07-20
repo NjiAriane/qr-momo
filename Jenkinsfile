@@ -2,11 +2,15 @@ pipeline {
     agent any
 
     triggers {
-        pollSCM 'H/5 * * * *'
+        pollSCM 'H/5 * * * *' // Polling SCM every 5 minutes
     }
+
     environment {
         CI = false
-        SONARSCANNER = "sonarscanner"
+        SONARSCANNER = "sonarscanner" //
+        qr-momo_token = credentials('sonar-token-id') //
+        USERNAME = credentials('dockerhub-username') // 
+        PASSWORD = credentials('dockerhub-password') //
     }
 
     stages {
@@ -20,7 +24,7 @@ pipeline {
                                 -Dsonar.projectKey=qr-momo \
                                 -Dsonar.sources=. \
                                 -Dsonar.host.url=http://localhost:9000 \
-                                -Dsonar.token=${qr-momo_token}
+                                -Dsonar.login=${qr-momo_token}
                             """
                         } catch (Exception e) {
                             error("SonarQube analysis failed: ${e.message}")
@@ -46,4 +50,5 @@ pipeline {
             }
         }
     }
-}
+
+    
