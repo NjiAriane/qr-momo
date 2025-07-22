@@ -1,31 +1,30 @@
-
 pipeline {
     agent any
 
     environment {
         CI = false
         SONAR_PROJECT_KEY = "qr-momo"
+        SONAR_HOST_URL = "http://192.168.1.230:9000" // 👈 Replace with your SonarQube server IP
     }
 
     stages {
         stage('Run SonarQube Analysis') {
-            environment {
-                qr_momo_token = credentials('my-qr-credentials')
-            }
             steps {
-                withSonarQubeEnv('sonarscanner') {
-                    script {
-                        def scannerHome = tool 'sonarscanner'
-                        try {
-                            sh """
-                                ${scannerHome}/bin/sonar-scanner \
-                                -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
-                                -Dsonar.sources=. \
-                                -Dsonar.host.url=${env.SONAR_HOST_URL} \
-                                -Dsonar.login=${qr_momo_token}
-                            """
-                        } catch (Exception e) {
-                            error("SonarQube analysis failed: ${e.message}")
+                withCredentials([string(credentialsId: 'my-qr-credentials', variable: 'SONAR_TOKEN')]) {
+                    withSonarQubeEnv('sonarscanner') {
+                        script {
+                            def scannerHome = tool 'sonarscanner'
+                            try {
+                                sh """
+                                    ${scannerHome}/bin/sonar-scanner \
+                                    -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
+                                    -Dsonar.sources=. \
+                                    -Dsonar.host.url=${env.SONAR_HOST_URL} \
+                                    -Dsonar.login=$SONAR_TOKEN
+                                """
+                            } catch (Exception e) {
+                                error("SonarQube analysis failed: ${e.message}")
+                            }
                         }
                     }
                 }
@@ -40,17 +39,18 @@ pipeline {
         }
 
         stage('Deployment') {
-            environment {
-                DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-            }
             steps {
-                echo 'Deploying to DockerHub'
-                sh "docker tag qr-momo-1:${BUILD_NUMBER} jaymath237/qr-momo-1:${BUILD_NUMBER}"
-                sh """
-                    echo "${DOCKERHUB_CREDENTIALS_PSW}" | docker login -u "${DOCKERHUB_CREDENTIALS_USR}" --password-stdin
-                """
-                sh "docker push jaymath237/qr-momo-1:${BUILD_NUMBER}"
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    echo 'Deploying to DockerHub'
+                    sh "docker tag qr-momo-1:${BUILD_NUMBER} jaymath237/qr-momo-1:${BUILD_NUMBER}"
+                    sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    """
+                    sh "docker push jaymath237/qr-momo-1:${BUILD_NUMBER}"
+                }
             }
         }
     }
 }
+
+                  
