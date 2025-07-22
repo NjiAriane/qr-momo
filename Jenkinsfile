@@ -1,25 +1,28 @@
+
 pipeline {
     agent any
 
     environment {
         CI = false
-        SONARSCANNER = "sonarscanner"
-        qr_momo_token = credentials('my-qr-credentials') // Use credentials function
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials') // Use credentials function
+        SONAR_PROJECT_KEY = "qr-momo"
     }
 
     stages {
         stage('Run SonarQube Analysis') {
+            environment {
+                qr_momo_token = credentials('my-qr-credentials')
+            }
             steps {
                 withSonarQubeEnv('sonarscanner') {
                     script {
+                        def scannerHome = tool 'sonarscanner'
                         try {
                             sh """
-                                ${SONARSCANNER} \
-                                -Dsonar.projectKey=qr-momo \
+                                ${scannerHome}/bin/sonar-scanner \
+                                -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
                                 -Dsonar.sources=. \
-                                -Dsonar.host.url=http://localhost:9000 \
-                                -Dsonar.login=${qr_momo_token} // Use QR code token
+                                -Dsonar.host.url=${env.SONAR_HOST_URL} \
+                                -Dsonar.login=${qr_momo_token}
                             """
                         } catch (Exception e) {
                             error("SonarQube analysis failed: ${e.message}")
@@ -33,17 +36,20 @@ pipeline {
             steps {
                 echo 'Installing Dependencies and Building'
                 sh 'docker build -t qr-momo-1:${BUILD_NUMBER} .'
-            }  
+            }
         }
 
         stage('Deployment') {
+            environment {
+                DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+            }
             steps {
-                echo 'Deploying to Dockerhub'
-                sh 'docker tag qr-momo-1:${BUILD_NUMBER} jaymath237/qr-momo-1'
+                echo 'Deploying to DockerHub'
+                sh "docker tag qr-momo-1:${BUILD_NUMBER} jaymath237/qr-momo-1:${BUILD_NUMBER}"
                 sh """
-                    docker login -u ${DOCKERHUB_CREDENTIALS.username} -p ${DOCKERHUB_CREDENTIALS.password} docker.io
+                    echo "${DOCKERHUB_CREDENTIALS_PSW}" | docker login -u "${DOCKERHUB_CREDENTIALS_USR}" --password-stdin
                 """
-                sh 'docker push jaymath237/qr-momo-1'
+                sh "docker push jaymath237/qr-momo-1:${BUILD_NUMBER}"
             }
         }
     }
