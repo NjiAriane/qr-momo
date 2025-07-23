@@ -1,4 +1,4 @@
-       pipeline {
+pipeline {
     agent any
 
     environment {
@@ -21,7 +21,7 @@
                     sh """
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                     """
-                    sh "docker push jaymath237/qr-momo-1:${BUILD_NUMBER}"
+                    sh "docker push NjiAriane/qr-momo-1:${BUILD_NUMBER}"
                 }
             }
         }
