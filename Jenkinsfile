@@ -15,13 +15,12 @@ pipeline {
                         script {
                             def scannerHome = tool 'sonarscanner'
                             try {
-                                sh """
-                                    ${scannerHome}/bin/sonar-scanner \
-                                    -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
-                                    -Dsonar.sources=. \
-                                    -Dsonar.host.url=${env.SONAR_HOST_URL} \
-                                    -Dsonar.login=$SONAR_TOKEN
-                                """
+                               sh """
+    ${scannerHome}/bin/sonar-scanner \
+    -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
+    -Dsonar.sources=. \
+    -Dsonar.host.url=${env.SONAR_HOST_URL}
+""" 
                             } catch (Exception e) {
                                 error("SonarQube analysis failed: ${e.message}")
                             }
