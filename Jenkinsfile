@@ -1,35 +1,11 @@
-pipeline {
+       pipeline {
     agent any
 
     environment {
         CI = false
-        SONAR_PROJECT_KEY = "qr-momo"
-        SONAR_HOST_URL = "http://192.168.1.230:9000" // 👈 Replace with your SonarQube server IP
     }
 
     stages {
-        stage('Run SonarQube Analysis') {
-            steps {
-                withCredentials([string(credentialsId: 'my-qr-credentials', variable: 'SONAR_TOKEN')]) {
-                    withSonarQubeEnv('sonarscanner') {
-                        script {
-                            def scannerHome = tool 'sonarscanner'
-                            try {
-                               sh """
-    ${scannerHome}/bin/sonar-scanner \
-    -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
-    -Dsonar.sources=. \
-    -Dsonar.host.url=${env.SONAR_HOST_URL}
-""" 
-                            } catch (Exception e) {
-                                error("SonarQube analysis failed: ${e.message}")
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         stage('Build') {
             steps {
                 echo 'Installing Dependencies and Building'
@@ -50,6 +26,4 @@ pipeline {
             }
         }
     }
-}
-
-                  
+}  
