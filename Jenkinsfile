@@ -1,29 +1,37 @@
 pipeline {
     agent any
-
+    
+    triggers {
+         pollSCM '* * * * *'
+    }
     environment {
-        CI = false
+        CI = false          // do not treat warnings as errors
     }
-
     stages {
-        stage('Build') {
+        stage('Run SonarQube Analysis') {
             steps {
-                echo 'Installing Dependencies and Building'
-                sh 'docker build -t qr-momo-1:${BUILD_NUMBER} .'
+                withCredentials([string(credentialsId: 'sonar-jenkins-token', variable: 'SONARQUBE')]) {
+                    sh '''
+                        sonar-scanner \
+                          -Dsonar.projectKey=qr-momo-code-analysis \
+                          -Dsonar.sources=. \
+                          -Dsonar.host.url=http://sonarqube:9000 \
+                          -Dsonar.login=$SONARQUBE
+                    '''
+                }   
             }
         }
-
-        stage('Deployment') {
+        
+        stage('Dockerizing') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    echo 'Deploying to DockerHub'
-                    sh "docker tag qr-momo-1:${BUILD_NUMBER} Ariane1/qr-momo-1:${BUILD_NUMBER}"
-                    sh """
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    """
-                    sh "docker push Arian1/qr-momo-1:${BUILD_NUMBER}"
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh 'docker login -u $USERNAME -p $PASSWORD'
+    // Your Docker commands using the environment variables
+                    sh 'docker build -t qrmomojenk:v2 .'
+                    sh 'docker tag qrmomojenk:v2 ariana1/qrmomojenk:v2'
+                    sh 'docker push ariana1/qrmomojenk:v2'
                 }
-            }
-        }
-    }
-}  
+            } 
+        }         
+    }    
+}
